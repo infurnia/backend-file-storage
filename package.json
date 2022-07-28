@@ -1,0 +1,31 @@
+{
+  "name": "@infurnia/backend-file-storage",
+  "version": "1.0.0",
+  "description": "Storage engine for google cloud storage",
+  "main": "index.js",
+  "engines": {
+    "node": ">=10"
+  },
+  "keywords": [
+    "multer",
+    "node",
+    "gcs",
+    "google",
+    "cloud",
+    "storage",
+    "infurnia",
+    "fs",
+    "storage"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@google-cloud/storage": "^6.2.3",
+    "@infurnia/multer-cloud-storage": "^1.1.0",
+    "fs": "0.0.1-security",
+    "path": "^0.12.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/infurnia/backend-file-storage.git"
+  }
+}
