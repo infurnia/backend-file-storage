@@ -49,8 +49,8 @@ class FileStorage {
     //returns the list of files in the directory
     listFiles = async (directory) => {
         try{
-            let files_list = await gcs_client.list_files_in_bucket(this.bucket_name, directory);
-            return files_list[0].map(x=> x.name);
+            let files_list = await this.gcs_client.list_files_in_bucket(this.bucket_name, directory);
+            return files_list[0];
         }
         catch(err){
             console.error(`error in file_storage/index.js/listFiles`);
@@ -64,7 +64,7 @@ class FileStorage {
         //by default will upload to one bucket only...change priorityLevel to change
         try{
             destinationPath = clean_file_path(destinationPath);
-            await gcs_client.write_file_from_path_to_bucket(this.bucket_name, destinationPath, sourcePath);
+            await this.gcs_client.write_file_from_path_to_bucket(this.bucket_name, destinationPath, sourcePath);
             if (deleteSourceFileAfterUpload===true) {
                 await fs_promises.rm(sourcePath);
             }
@@ -85,7 +85,7 @@ class FileStorage {
     writeFileFromBuffer = async (object, destinationPath) => {
         try{
             destinationPath = clean_file_path(destinationPath);
-            await gcs_client.write_file_obj_to_bucket(this.bucket_name, destinationPath, object);
+            await this.gcs_client.write_file_obj_to_bucket(this.bucket_name, destinationPath, object);
             return OK_RESPONSE_TEXT;
         }
         catch(err){
@@ -99,7 +99,7 @@ class FileStorage {
     getWriteStream = async(filePath) => { 
         try{
             filePath = clean_file_path(filePath);
-            return await gcs_client.get_write_stream_for_bucket(this.bucket_name, filePath);
+            return await this.gcs_client.get_write_stream_for_bucket(this.bucket_name, filePath);
         }
         catch(err){
             console.error(`error in file_storage/index.js/writeFileFromBuffer`);
@@ -116,7 +116,7 @@ class FileStorage {
             }
             filePath = clean_file_path(filePath);
             //check if the key exists
-            let response = await gcs_client.check_if_file_exists(
+            let response = await this.gcs_client.check_if_file_exists(
                 this.bucket_name,
                 filePath
             );
@@ -136,7 +136,7 @@ class FileStorage {
             sourceFilePath = clean_file_path(sourceFilePath);
             destFilePath = clean_file_path(destFilePath);
             //copy the file
-            await gcs_client.copy(this.bucket_name, sourceFilePath, this.bucket_name, destFilePath);
+            await this.gcs_client.copy(this.bucket_name, sourceFilePath, this.bucket_name, destFilePath);
             return OK_RESPONSE_TEXT;
         }
         catch(err) {
@@ -150,10 +150,23 @@ class FileStorage {
     readFile = async(filePath) => {
         try{
             filePath = clean_file_path(filePath);
-            return (await gcs_client.read_file(this.bucket_name, filePath)).toString('utf-8');
+            return (await this.gcs_client.read_file(this.bucket_name, filePath)).toString('utf-8');
         }
         catch(err){
             console.error(`error in file_storage/index.js/readFile`);
+            console.error(err);
+            throw err;
+        }
+    }
+
+    //gets a signed url for an object with read permission
+    getSignedUrl = async(filePath) => {
+        try{
+            filePath = clean_file_path(filePath);
+            return await this.gcs_client.get_signed_url(this.bucket_name, filePath, 'read');
+        }
+        catch(err){
+            console.error(`error in file_storage/index.js/getSignedUrl`);
             console.error(err);
             throw err;
         }

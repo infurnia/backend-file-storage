@@ -97,6 +97,24 @@ class InfurniaGCSClient {
             throw err;
         }
     }
+
+    //get signed url
+    get_signed_url = async(bucket_name, key, permission='read', expiry_in_secs=180) => {
+        try{
+            if (!bucket_name) throw new Error(`bucket_name must be specified`);
+            if (!key) throw new Error(`key must be specified`);
+            if (permission!='read' && permission!='write') {
+                throw new Error(`permission level ${permission} is not supported, must be one of ['read', 'write']`);
+            }
+            const gcs_file = this.gcsClient.bucket(bucket_name).file(key);
+            const res = await gcs_file.getSignedUrl({action: permission, expires: expiry_in_secs});
+            return res[0];
+        }
+        catch(err){
+            console.error(err);
+            throw err;
+        }
+    }
 }
 
 module.exports = InfurniaGCSClient;
