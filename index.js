@@ -5,6 +5,7 @@ const multerGoogleStorage = require("@infurnia/multer-cloud-storage");
 const OK_RESPONSE_TEXT = "OK";
 const crypto = require('crypto');
 const path = require('path');
+const fs_promises = require('fs').promises;
 
 class FileStorage {
     constructor({project_id, bucket_name}) {
@@ -59,11 +60,18 @@ class FileStorage {
     }
 
     //Uploads file from a path to the main uploads bucket
-    writeFileFromPath = async (sourcePath, destinationPath) => {
+    writeFileFromPath = async (sourcePath, destinationPath, deleteSourceFileAfterUpload=false) => {
         //by default will upload to one bucket only...change priorityLevel to change
         try{
             destinationPath = clean_file_path(destinationPath);
             await gcs_client.write_file_from_path_to_bucket(this.bucket_name, destinationPath, sourcePath);
+            if (deleteSourceFileAfterUpload===true) {
+                await fs_promises.rm(sourcePath);
+            }
+            else if (typeof deleteSourceFileAfterUpload==='string' && path.relative(deleteSourceFileAfterUpload, sourcePath).includes('/')==false){
+                //the path to be deleted can only be one level above the path being copied at max...so there is no slash in the relative path
+                await fs_promises.rm(deleteSourceFileAfterUpload, {recursive: true});
+            }
             return OK_RESPONSE_TEXT;
         }   
         catch(err){
