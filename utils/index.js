@@ -1,14 +1,14 @@
 const {relative} = require('path');
 const readdir = require('fs').promises.readdir;
 
-const clean_file_path = function(filePath) {
+const clean_file_path = function(filePath, leading_slash=true) {
     if (filePath==null || filePath==undefined){
         console.warn(`filePath is null or undefined`);
         return null;
     }
     if (filePath.length<2) {
-        if (filePath[0]!='/' && filePath[1]!='.') {
-            return filePath;
+        if (filePath[0]!='/' && filePath[0]!='.') {
+            return leading_slash ? '/'+filePath : filePath;
         }
         else {
             throw new Error(`filePath ${filePath} is not supported for file_storage`);
@@ -16,9 +16,9 @@ const clean_file_path = function(filePath) {
     }
     //clean the filePath of ./ stuff
     if (filePath[0]=='.' && filePath[1]=='/'){
-        filePath = filePath.slice(2);
+        filePath = leading_slash ? filePath.slice(1) : filePath.slice(2);
     }
-    else if (filePath[0]=='/'){
+    else if (filePath[0]=='/' && leading_slash==false){
         filePath = filePath.slice(1);
     }
     return filePath;

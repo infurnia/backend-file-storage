@@ -1,5 +1,5 @@
 const {Storage} = require('@google-cloud/storage');
-
+const moment = require('moment');
 class InfurniaGCSClient {
     constructor(project_id, key_file_path) {
         if (!project_id) throw new Error(`InfurniaGCSClient: project_id must be specified`);
@@ -99,7 +99,7 @@ class InfurniaGCSClient {
     }
 
     //get signed url
-    get_signed_url = async(bucket_name, key, permission='read', expiry_in_secs=180) => {
+    get_signed_url = async(bucket_name, key, permission='read', expiry_in_secs=600) => {
         try{
             if (!bucket_name) throw new Error(`bucket_name must be specified`);
             if (!key) throw new Error(`key must be specified`);
@@ -107,7 +107,9 @@ class InfurniaGCSClient {
                 throw new Error(`permission level ${permission} is not supported, must be one of ['read', 'write']`);
             }
             const gcs_file = this.gcsClient.bucket(bucket_name).file(key);
-            const res = await gcs_file.getSignedUrl({action: permission, expires: expiry_in_secs});
+            let expires = new Date();
+            expires = moment(expires).add(expiry_in_secs, 's').toDate();
+            const res = await gcs_file.getSignedUrl({action: permission, expires: expires});
             return res[0];
         }
         catch(err){

@@ -11,17 +11,17 @@ class FileStorage {
     constructor({project_id, bucket_name}) {
         this.project_id = project_id || process.env.GCP_PROJECT_ID;
         this.bucket_name = bucket_name || process.env.GCS_FILE_STORAGE_BUCKET_NAME;
-        if (!project_id) { 
+        if (!this.project_id) { 
             throw new Error(`neither project_id is given to the FileStorage constructor, nor is env var GCP_PROJECT_ID is not set`);
         }
-        if (!bucket_name) {
+        if (!this.bucket_name) {
             throw new Error(`neither bucket_name is given to the FileStorage constructor, nor is env var GCS_FILE_STORAGE_BUCKET_NAME is not set`);
         }
         this.gcs_client = new InfurniaGCSClient(this.project_id, null);
     }
 
     //returns multer storage engine object for the bucket
-    getMulter(
+    getMulter = function(
         destination,
         filename_fn = function (req, file, cb) {
             crypto.pseudoRandomBytes(16, function (err, raw) {
@@ -31,9 +31,11 @@ class FileStorage {
         }
     ) {
         try{
+            let bucket_name = this.bucket_name;
+            let project_id = this.project_id;
             return multerGoogleStorage.storageEngine({
-                bucket: this.bucket_name,
-                projectId: this.project_id,
+                bucket: bucket_name,
+                projectId: project_id,
                 uniformBucketLevelAccess: true,
                 destination,
                 filename: filename_fn
@@ -50,7 +52,7 @@ class FileStorage {
     listFiles = async (directory) => {
         try{
             let files_list = await this.gcs_client.list_files_in_bucket(this.bucket_name, directory);
-            return files_list[0];
+            return files_list[0].map(x=> { return { name: x.name, created_at: x.metadata.timeCreated, updated_at: x.metadata.updated}});
         }
         catch(err){
             console.error(`error in file_storage/index.js/listFiles`);
