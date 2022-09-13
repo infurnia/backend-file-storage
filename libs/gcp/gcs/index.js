@@ -9,10 +9,15 @@ class InfurniaGCSClient {
     }
 
     //upload a file object to a single bucket
-    write_file_obj_to_bucket = async(bucket_name, key, file_object) => {
+    write_file_obj_to_bucket = async(bucket_name, key, file_object, content_disposition_attachment=false) => {
         try{
             const gcs_file = this.gcsClient.bucket(bucket_name).file(key);
-            await gcs_file.save(file_object, { resumable: false });
+            if (content_disposition_attachment) {
+                await gcs_file.save(file_object, { resumable: false, metadata: { contentDisposition: 'attachment'}});
+            }
+            else {
+                await gcs_file.save(file_object, { resumable: false });
+            }
             return 1;
         }
         catch(err) {
@@ -22,10 +27,16 @@ class InfurniaGCSClient {
     }
 
     //upload a file from path to a single bucket
-    write_file_from_path_to_bucket = async(bucket_name, key, file_path) => {
+    write_file_from_path_to_bucket = async(bucket_name, key, file_path, content_disposition_attachment=false) => {
         try{
+            let save_res;
             const gcs_bucket = this.gcsClient.bucket(bucket_name);
-            const save_res = await gcs_bucket.upload(file_path, {destination: key, resumable: false});
+            if(content_disposition_attachment){
+                save_res = await gcs_bucket.upload(file_path, {destination: key, resumable: false, metadata: { contentDisposition: 'attachment'}});
+            }
+            else {
+                save_res = await gcs_bucket.upload(file_path, {destination: key, resumable: false});
+            }
             return save_res;
         }
         catch(err) {
@@ -35,9 +46,14 @@ class InfurniaGCSClient {
     }
 
     //get a write stream to write to the bucket
-    get_write_stream_for_bucket = async(bucket_name, key) => {
+    get_write_stream_for_bucket = async(bucket_name, key, content_disposition_attachment=false) => {
         try{
-            return this.gcsClient.bucket(bucket_name).file(key).createWriteStream();
+            if (content_disposition_attachment) {
+                return this.gcsClient.bucket(bucket_name).file(key).createWriteStream({ metadata: { contentDisposition: 'attachment' }});
+            }
+            else {
+                return this.gcsClient.bucket(bucket_name).file(key).createWriteStream();
+            }
         }
         catch(err) {
             console.error(err);
@@ -57,10 +73,10 @@ class InfurniaGCSClient {
     }
 
     //check if the file exists
-    check_if_file_exists = async(bucket_name, key_prefix) => {
+    check_if_file_exists = async(bucket_name, key) => {
         try{
-            let all_keys = await this.list_files_in_bucket(bucket_name,key_prefix);
-            return all_keys[0].map(x=>x.name);
+            let all_keys = await this.list_files_in_bucket(bucket_name,key);
+            return all_keys[0].some(x=> x.name==key);
         }
         catch(err){
             console.error(err);
@@ -91,6 +107,21 @@ class InfurniaGCSClient {
             const gcs_file = this.gcsClient.bucket(bucket_name).file(key);
             const res = await gcs_file.download();
             return res[0];
+        }
+        catch(err){
+            console.error(err);
+            throw err;
+        }
+    }
+
+    //read file contents
+    download_file = async(bucket_name, key, destination_path) => {
+        try{
+            if (!bucket_name) throw new Error(`bucket_name must be specified`);
+            if (!key) throw new Error(`key must be specified`);
+            const gcs_file = this.gcsClient.bucket(bucket_name).file(key);
+            const res = await gcs_file.download({ destination: destination_path});
+            return res;
         }
         catch(err){
             console.error(err);

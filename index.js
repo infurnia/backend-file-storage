@@ -62,11 +62,11 @@ class FileStorage {
     }
 
     //Uploads file from a path to the main uploads bucket
-    writeFileFromPath = async (sourcePath, destinationPath, deleteSourceFileAfterUpload=false) => {
+    writeFileFromPath = async (sourcePath, destinationPath, deleteSourceFileAfterUpload=false, contentDispositionAttachment=false) => {
         //by default will upload to one bucket only...change priorityLevel to change
         try{
-            destinationPath = clean_file_path(destinationPath);
-            await this.gcs_client.write_file_from_path_to_bucket(this.bucket_name, destinationPath, sourcePath);
+            destinationPath = clean_file_path(destinationPath, false);
+            await this.gcs_client.write_file_from_path_to_bucket(this.bucket_name, destinationPath, sourcePath, contentDispositionAttachment);
             if (deleteSourceFileAfterUpload===true) {
                 await fs_promises.rm(sourcePath);
             }
@@ -84,10 +84,10 @@ class FileStorage {
     }
 
     //Uploads file a buffer or string to the uploads bucket as a file 
-    writeFileFromBuffer = async (object, destinationPath) => {
+    writeFileFromBuffer = async (object, destinationPath, contentDispositionAttachment=false) => {
         try{
-            destinationPath = clean_file_path(destinationPath);
-            await this.gcs_client.write_file_obj_to_bucket(this.bucket_name, destinationPath, object);
+            destinationPath = clean_file_path(destinationPath, false);
+            await this.gcs_client.write_file_obj_to_bucket(this.bucket_name, destinationPath, object, contentDispositionAttachment);
             return OK_RESPONSE_TEXT;
         }
         catch(err){
@@ -98,10 +98,10 @@ class FileStorage {
     }
     
     //Get a writable stream to pipe content to
-    getWriteStream = async(filePath) => { 
+    getWriteStream = async(filePath, contentDispositionAttachment=false) => { 
         try{
-            filePath = clean_file_path(filePath);
-            return await this.gcs_client.get_write_stream_for_bucket(this.bucket_name, filePath);
+            filePath = clean_file_path(filePath, false);
+            return await this.gcs_client.get_write_stream_for_bucket(this.bucket_name, filePath, contentDispositionAttachment);
         }
         catch(err){
             console.error(`error in file_storage/index.js/writeFileFromBuffer`);
@@ -116,13 +116,12 @@ class FileStorage {
             if (filePath==null || filePath==undefined) {
                 throw new Error(`file_storage/exists: filePath is ${filePath}`);
             }
-            filePath = clean_file_path(filePath);
+            filePath = clean_file_path(filePath, false);
             //check if the key exists
-            let response = await this.gcs_client.check_if_file_exists(
+            return await this.gcs_client.check_if_file_exists(
                 this.bucket_name,
                 filePath
             );
-            return response.length==1;
         }
         catch(err) {
             console.error(`error in file_storage/index.js/exists`);   
@@ -135,8 +134,8 @@ class FileStorage {
     copy = async(sourceFilePath, destFilePath) => {
         try{
             //clean the file paths
-            sourceFilePath = clean_file_path(sourceFilePath);
-            destFilePath = clean_file_path(destFilePath);
+            sourceFilePath = clean_file_path(sourceFilePath, false);
+            destFilePath = clean_file_path(destFilePath, false);
             //copy the file
             await this.gcs_client.copy(this.bucket_name, sourceFilePath, this.bucket_name, destFilePath);
             return OK_RESPONSE_TEXT;
@@ -151,7 +150,7 @@ class FileStorage {
     //reads a file from the bucket into a string
     readFile = async(filePath) => {
         try{
-            filePath = clean_file_path(filePath);
+            filePath = clean_file_path(filePath, false);
             return (await this.gcs_client.read_file(this.bucket_name, filePath)).toString('utf-8');
         }
         catch(err){
@@ -161,10 +160,24 @@ class FileStorage {
         }
     }
 
+    //downloads gcs object as a file
+    downloadFile = async(sourceFilePath, destFilePath) => {
+        try{
+            sourceFilePath = clean_file_path(sourceFilePath, false);
+            console.debug(sourceFilePath, destFilePath);
+            return (await this.gcs_client.download_file(this.bucket_name, sourceFilePath, destFilePath));
+        }
+        catch(err){
+            console.error(`error in file_storage/index.js/downloadFile`);
+            console.error(err);
+            throw err;
+        }
+    }
+
     //gets a signed url for an object with read permission
     getSignedUrl = async(filePath) => {
         try{
-            filePath = clean_file_path(filePath);
+            filePath = clean_file_path(filePath, false);
             return await this.gcs_client.get_signed_url(this.bucket_name, filePath, 'read');
         }
         catch(err){
