@@ -5,7 +5,7 @@ let file_storage = new FileStorage({ bucket_name: 'infurnia-dev-uploads', projec
 var main = async() => {
     try {
         console.log(await file_storage.exists('prom_logo.png'));
-        console.log(await file_storage.readFile('prom_logo.png'));
+        console.log(await file_storage.downloadFile('prom_logo.png', '/Users/vineet/Documents/infurnia/backend-file-storage/a.png'));
         return 'OK';
     }
     catch(err){
