@@ -120,9 +120,8 @@ class InfurniaGCSClient {
             if (!bucket_name) throw new Error(`bucket_name must be specified`);
             if (!key) throw new Error(`key must be specified`);
             const gcs_file = this.gcsClient.bucket(bucket_name).file(key);
-            const res = await gcs_file.download({ destination: destination_path});
-            console.log(res);
-            return res;
+            await gcs_file.download({ destination: destination_path});
+            return "OK";
         }
         catch(err){
             console.error(err);
