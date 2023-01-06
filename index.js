@@ -2,6 +2,7 @@ const utils = require('./utils');
 const clean_file_path = utils.clean_file_path;
 const InfurniaGCSClient = require('./libs/gcp/gcs');
 const multerGoogleStorage = require("@infurnia/multer-cloud-storage");
+const multer = require('multer');
 const OK_RESPONSE_TEXT = "OK";
 const crypto = require('crypto');
 const path = require('path');
@@ -20,8 +21,61 @@ class FileStorage {
         this.gcs_client = new InfurniaGCSClient(this.project_id, null);
     }
 
+    filterFile = function(
+        upload_type
+    ) {
+        try {
+            let filter_mimetype = [];
+            let filter_extension = [];
+            if(upload_type == 'image') {
+                filter_mimetype = ["image/apng", "image/avif", "image/gif", "image/jpeg", "image/png", "image/svg+xml", "image/webp"];
+                filter_extension = [".png", ".jpeg", ".jpg", ".avif", ".svg", ".gif", ".webp"];
+            } else if(upload_type == 'model') {
+                filter_mimetype = ["model/3mf", "model/vrml", "application/octet-stream"];
+                filter_extension = [".obj", ".mtl", ".blend", ".glb"];
+            } 
+            return function(req, file, cb) {
+                if(filter_extension.includes(path.extname(file.originalname)) && filter_mimetype.includes(file.mimetype)) {
+                    cb(null, true);
+                } else {
+                    console.error(`Invalid file upload (${upload_type}): ${file.originalname} ${file.mimetype}`);
+                    cb(new Error("file is invalid"))
+                }
+            }
+        } catch (err) {
+            console.error(`error in file_storage/index.js/filterFile`);
+            console.error(err);
+            throw err;
+        }
+    }
+
+    getMulter = function(storage_engine, upload_type, {multer_type, args}, utils) {
+        let filterFileFunc = this.filterFile;
+        return function(req, res, next) {
+            let multerInstance = multer({
+                storage: storage_engine, 
+                fileFilter: filterFileFunc(upload_type)
+            });
+            if(multer_type == "single") {
+                 multerInstance =  multerInstance.single(args[0])
+            } else if(multer_type == "array") {
+                multerInstance = multerInstance.array(...args)
+            } else if(multer_type == "any") {
+                multerInstance = multerInstance.any()
+            } else {
+                throw new Error(`multer_type ${multer_type} not supported`);
+            }
+            return multerInstance(req, res, function(err) {
+                if (err) {
+                    return utils.send_response_bad_request_error(res, new Error("BAD_FILE_UPLOAD"))
+                } 
+                return next();
+            });
+        }
+    }
+
     //returns multer storage engine object for the bucket
-    getMulter = function(
+    getMulterStorage = function(
         destination,
         filename_fn = function (req, file, cb) {
             crypto.pseudoRandomBytes(16, function (err, raw) {
