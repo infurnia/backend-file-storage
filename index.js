@@ -8,6 +8,11 @@ const crypto = require('crypto');
 const path = require('path');
 const fs_promises = require('fs').promises;
 
+const image_mimetypes = ["image/apng", "image/avif", "image/gif", "image/jpeg", "image/png", "image/svg+xml", "image/webp"];
+const image_extensions = [".png", ".jpeg", ".jpg", ".avif", ".svg", ".gif", ".webp"];
+const model_mimetypes = ["model/3mf", "model/vrml", "model/gltf-binary", "model/stl", "model/example", "model/mtl", "model/gltf+json", "model/e57", "model/obj", "model/stl", "model/prc", "model/u3d", "application/octet-stream"];
+const model_extensions = [".obj", ".mtl", ".blend", ".glb"];
+
 class FileStorage {
     constructor({project_id, bucket_name}) {
         this.project_id = project_id || process.env.GCP_PROJECT_ID;
@@ -28,11 +33,11 @@ class FileStorage {
             let filter_mimetype = [];
             let filter_extension = [];
             if(upload_type == 'image') {
-                filter_mimetype = ["image/apng", "image/avif", "image/gif", "image/jpeg", "image/png", "image/svg+xml", "image/webp"];
-                filter_extension = [".png", ".jpeg", ".jpg", ".avif", ".svg", ".gif", ".webp"];
+                filter_mimetype = image_mimetypes;
+                filter_extension = image_extensions;
             } else if(upload_type == 'model') {
-                filter_mimetype = ["model/3mf", "model/vrml", "application/octet-stream"];
-                filter_extension = [".obj", ".mtl", ".blend", ".glb"];
+                filter_mimetype = model_mimetypes;
+                filter_extension = model_extensions;
             } 
             return function(req, file, cb) {
                 if(filter_extension.includes(path.extname(file.originalname)) && filter_mimetype.includes(file.mimetype)) {
