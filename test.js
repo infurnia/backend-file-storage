@@ -5,7 +5,7 @@ let file_storage = new FileStorage({ bucket_name: 'infurnia-dev-uploads', projec
 
 var main = async() => {
     try {
-        console.log(await file_storage.writeFileFromPath('sample_vid.avi', 'vid_large.avi', false, true, true));
+        console.log(await file_storage.writeFileFromPath('sample_vid.avi', 'vid_large_2.avi', false, true, false));
         return 'OK';
     }
     catch(err){
