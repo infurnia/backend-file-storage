@@ -5,8 +5,7 @@ let file_storage = new FileStorage({ bucket_name: 'infurnia-dev-uploads', projec
 
 var main = async() => {
     try {
-        console.log(await file_storage.exists('prom_logo.png'));
-        console.log(await file_storage.downloadFile('prom_logo.png', path.join(__dirname, 'a.png')));
+        console.log(await file_storage.writeFileFromPath('vid.avi', 'vid_large.avi', false, true, false));
         return 'OK';
     }
     catch(err){

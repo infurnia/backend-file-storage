@@ -121,11 +121,11 @@ class FileStorage {
     }
 
     //Uploads file from a path to the main uploads bucket
-    writeFileFromPath = async (sourcePath, destinationPath, deleteSourceFileAfterUpload=false, contentDispositionAttachment=false) => {
+    writeFileFromPath = async (sourcePath, destinationPath, deleteSourceFileAfterUpload=false, contentDispositionAttachment=false, largeFile=false) => {
         //by default will upload to one bucket only...change priorityLevel to change
         try{
             destinationPath = clean_file_path(destinationPath, false);
-            await this.gcs_client.write_file_from_path_to_bucket(this.bucket_name, destinationPath, sourcePath, contentDispositionAttachment);
+            await this.gcs_client.write_file_from_path_to_bucket(this.bucket_name, destinationPath, sourcePath, contentDispositionAttachment, largeFile);
             if (deleteSourceFileAfterUpload===true) {
                 await fs_promises.rm(sourcePath);
             }

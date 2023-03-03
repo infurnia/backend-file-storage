@@ -9,14 +9,14 @@ class InfurniaGCSClient {
     }
 
     //upload a file object to a single bucket
-    write_file_obj_to_bucket = async(bucket_name, key, file_object, content_disposition_attachment=false) => {
+    write_file_obj_to_bucket = async(bucket_name, key, file_object, content_disposition_attachment=false, large_file=false) => {
         try{
             const gcs_file = this.gcsClient.bucket(bucket_name).file(key);
             if (content_disposition_attachment) {
-                await gcs_file.save(file_object, { resumable: false, metadata: { contentDisposition: 'attachment'}});
+                await gcs_file.save(file_object, { resumable: large_file, metadata: { contentDisposition: 'attachment'}});
             }
             else {
-                await gcs_file.save(file_object, { resumable: false });
+                await gcs_file.save(file_object, { resumable: large_file });
             }
             return 1;
         }
@@ -27,15 +27,15 @@ class InfurniaGCSClient {
     }
 
     //upload a file from path to a single bucket
-    write_file_from_path_to_bucket = async(bucket_name, key, file_path, content_disposition_attachment=false) => {
+    write_file_from_path_to_bucket = async(bucket_name, key, file_path, content_disposition_attachment=false, large_file=false) => {
         try{
             let save_res;
             const gcs_bucket = this.gcsClient.bucket(bucket_name);
             if(content_disposition_attachment){
-                save_res = await gcs_bucket.upload(file_path, {destination: key, resumable: false, metadata: { contentDisposition: 'attachment'}});
+                save_res = await gcs_bucket.upload(file_path, {destination: key, resumable: large_file, metadata: { contentDisposition: 'attachment'}});
             }
             else {
-                save_res = await gcs_bucket.upload(file_path, {destination: key, resumable: false});
+                save_res = await gcs_bucket.upload(file_path, {destination: key, resumable: large_file});
             }
             return save_res;
         }

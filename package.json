@@ -1,6 +1,6 @@
 {
   "name": "@infurnia/backend-file-storage",
-  "version": "3.0.1",
+  "version": "3.2.0",
   "description": "Storage engine for google cloud storage",
   "main": "index.js",
   "engines": {
