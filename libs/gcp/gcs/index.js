@@ -13,7 +13,7 @@ class InfurniaGCSClient {
         try{
             const gcs_file = this.gcsClient.bucket(bucket_name).file(key);
             if (content_disposition_attachment) {
-                await gcs_file.save(file_object, { resumable: false, metadata: { contentDisposition: 'attachment'}});
+                await gcs_file.save(file_object, { resumable: false, metadata: { cacheControl: 'public, max-age=864000', contentDisposition: 'attachment'}});
             }
             else {
                 await gcs_file.save(file_object, { resumable: false });
@@ -32,7 +32,7 @@ class InfurniaGCSClient {
             let save_res;
             const gcs_bucket = this.gcsClient.bucket(bucket_name);
             if(content_disposition_attachment){
-                save_res = await gcs_bucket.upload(file_path, {destination: key, resumable: false, metadata: { contentDisposition: 'attachment'}});
+                save_res = await gcs_bucket.upload(file_path, {destination: key, resumable: false, metadata: { cacheControl: 'public, max-age=864000', contentDisposition: 'attachment'}});
             }
             else {
                 save_res = await gcs_bucket.upload(file_path, {destination: key, resumable: false});
@@ -49,7 +49,7 @@ class InfurniaGCSClient {
     get_write_stream_for_bucket = async(bucket_name, key, content_disposition_attachment=false) => {
         try{
             if (content_disposition_attachment) {
-                return this.gcsClient.bucket(bucket_name).file(key).createWriteStream({ metadata: { contentDisposition: 'attachment' }});
+                return this.gcsClient.bucket(bucket_name).file(key).createWriteStream({ metadata: { cacheControl: 'public, max-age=864000', contentDisposition: 'attachment' }});
             }
             else {
                 return this.gcsClient.bucket(bucket_name).file(key).createWriteStream();
