@@ -146,8 +146,11 @@ export default class MulterGoogleCloudStorage implements multer.StorageEngine {
 
 			const contentType = this.getContentType(req, file);
 			if (contentType) {
-				streamOpts.metadata = {contentType};
+				streamOpts.metadata = {contentType, cacheControl: 'public, max-age=864000'};
 			}
+            if(!streamOpts.metadata) {
+                streamOpts.metadata = {cacheControl: 'public, max-age=864000'};
+            }
 
 			const blobStream = blob.createWriteStream(streamOpts);
 			file.stream.pipe(blobStream)

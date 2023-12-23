@@ -59,7 +59,10 @@ var MulterGoogleCloudStorage = /** @class */ (function () {
                             }
                             contentType = this.getContentType(req, file);
                             if (contentType) {
-                                streamOpts.metadata = { contentType: contentType };
+                                streamOpts.metadata = { contentType: contentType, cacheControl: 'public, max-age=864000' };
+                            }
+                            if (!streamOpts.metadata) {
+                                streamOpts.metadata = { cacheControl: 'public, max-age=864000' };
                             }
                             blobStream = blob.createWriteStream(streamOpts);
                             file.stream.pipe(blobStream)
@@ -71,11 +74,11 @@ var MulterGoogleCloudStorage = /** @class */ (function () {
                                     bucket: blob.metadata.bucket,
                                     destination: blobFile.destination,
                                     filename: filename,
-                                    path: "" + blobFile.destination + filename,
+                                    path: "".concat(blobFile.destination).concat(filename),
                                     contentType: blob.metadata.contentType,
                                     size: blob.metadata.size,
-                                    uri: "gs://" + blob.metadata.bucket + "/" + blobFile.destination + filename,
-                                    linkUrl: "https://storage.googleapis.com/" + blob.metadata.bucket + "/" + blobFile.destination + filename,
+                                    uri: "gs://".concat(blob.metadata.bucket, "/").concat(blobFile.destination).concat(filename),
+                                    linkUrl: "https://storage.googleapis.com/".concat(blob.metadata.bucket, "/").concat(blobFile.destination).concat(filename),
                                     selfLink: blob.metadata.selfLink,
                                     //metadata: blob.metadata
                                 });
@@ -106,7 +109,7 @@ var MulterGoogleCloudStorage = /** @class */ (function () {
             this.getDestination = function (req, file, cb) { cb(null, opts.destination); }
             : this.getDestination = opts.destination || this.getDestination;
         if (opts.hideFilename) {
-            this.getFilename = function (req, file, cb) { cb(null, "" + uuid_1.v4()); };
+            this.getFilename = function (req, file, cb) { cb(null, "".concat((0, uuid_1.v4)())); };
             this.getContentType = function (req, file) { return undefined; };
         }
         else {
@@ -126,23 +129,14 @@ var MulterGoogleCloudStorage = /** @class */ (function () {
         if (!opts.projectId) {
             throw new Error('You have to specify project id for Google Cloud Storage to work.');
         }
-        // if (!opts.keyFilename && !opts.credentials) {
-
-        //     // throw new Error('You have to specify credentials key file or credentials object, for Google Cloud Storage to work.');
-        // }
         if (!opts.keyFilename && !opts.credentials) {
-            this.gcsStorage = new storage_1.Storage({
-                projectId: opts.projectId,
-                keyFilename: opts.keyFilename,
-                credentials: opts.credentials
-            });
+            throw new Error('You have to specify credentials key file or credentials object, for Google Cloud Storage to work.');
         }
-        else {
-            console.warn(`Initializing @google/storage without keyFile or any explicit credentials`);
-            this.gcsStorage = new storage_1.Storage({
-                projectId: opts.projectId
-            });
-        }
+        this.gcsStorage = new storage_1.Storage({
+            projectId: opts.projectId,
+            keyFilename: opts.keyFilename,
+            credentials: opts.credentials
+        });
         this.gcsBucket = this.gcsStorage.bucket(opts.bucket);
         this.options = opts;
     }
@@ -151,7 +145,7 @@ var MulterGoogleCloudStorage = /** @class */ (function () {
         if (typeof file.originalname === 'string')
             cb(null, file.originalname);
         else
-            cb(null, "" + uuid_1.v4());
+            cb(null, "".concat((0, uuid_1.v4)()));
     };
     MulterGoogleCloudStorage.prototype.getDestination = function (req, file, cb) {
         cb(null, '');
